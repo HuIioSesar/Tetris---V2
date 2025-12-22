@@ -22,6 +22,7 @@ def main():
 
     # Start with StartScreen
     current_screen = "start"
+    starting_level = 0
 
     while current_screen != "quit":
         if current_screen == "start":
@@ -29,7 +30,13 @@ def main():
         elif current_screen == "options1":
             next_screen = Options1Screen(screen, settings, tiles).run()
         elif current_screen == "options2":
-            next_screen = Options2Screen(screen, settings, tiles).run()
+            result = Options2Screen(screen, settings, tiles).run()
+            if isinstance(result, tuple):
+                next_screen, starting_level = result  # Unpack tuple
+                print(starting_level)
+            else:
+                next_screen = result
+
         elif current_screen == "game":
             next_screen = GameLoop(screen, settings, tiles).run()
         else:

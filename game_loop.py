@@ -12,15 +12,20 @@ class GameLoop:
 
     def run(self):
         running = True
-        # blink_on = True
-        # frame_count = 0
 
-         #Draws background
-        self.background.draw_screen(self.screen, self.settings, self.tiles)
+        # Draw background once
+        self.background.draw_screen()
         pygame.display.flip()
 
         while running:
-            self.clock.tick(self.settings.fps)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return "quit"
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return "options2"  # Go back to previous menu
+                    
 
 # # --- CONFIGURACIÓN ---
 # pygame.init()

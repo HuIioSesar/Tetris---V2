@@ -53,8 +53,4 @@ class GameBackgroundScreen:
                 x = col_index * self.settings.tile_size * self.settings.scale
                 y = row_index * self.settings.tile_size * self.settings.scale
                 self.tiles.draw_tile(tile_name, x, y, self.screen)
-    
-    def run(self):
-        #Draws background
-        self.draw_screen()
-        pygame.display.flip()
+                

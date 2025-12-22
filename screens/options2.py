@@ -11,7 +11,7 @@ class Options2Screen:
             #1
             ["corner_top"]+["frame_top"]*18+["corner_top90"],
             #2
-            ["frame_top270"]+["0"]+["A"]+["-"]+["T"]+["Y"]+["P"]+["E"]+["0"]+["filler"]*10+["frame_top90"],
+            ["frame_top270"]+["filler"]*18+["frame_top90"],
             #3
             ["frame_top270"]+["filler"]*18+["frame_top90"],
             #4
@@ -56,13 +56,6 @@ class Options2Screen:
 
     @staticmethod
     def recolor_tile(tile_matrix, old_color=1, new_color=3):
-        return [
-            [new_color if pixel == old_color else pixel for pixel in row]
-            for row in tile_matrix
-        ]
-    
-    @staticmethod
-    def recolor_tile_fixed(tile_matrix, old_color=1, new_color=3):  # Black for fixed
         return [
             [new_color if pixel == old_color else pixel for pixel in row]
             for row in tile_matrix
@@ -136,6 +129,3 @@ class Options2Screen:
                 blink_on = not blink_on
                 self.draw_selected_options(blink_on)
                 pygame.display.flip()  # Refresh screen after arrow update   
-
-
-
