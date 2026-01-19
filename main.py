@@ -1,5 +1,3 @@
-
-
 import pygame
 from settings import Settings
 from tiles import Tiles
@@ -24,6 +22,7 @@ def main():
     current_screen = "start"
     starting_level = 0
 
+
     while current_screen != "quit":
         if current_screen == "start":
             next_screen = StartScreen(screen, settings, tiles).run()
@@ -33,12 +32,12 @@ def main():
             result = Options2Screen(screen, settings, tiles).run()
             if isinstance(result, tuple):
                 next_screen, starting_level = result  # Unpack tuple
-                print(starting_level)
+
             else:
                 next_screen = result
 
         elif current_screen == "game":
-            next_screen = GameLoop(screen, settings, tiles).run()
+            next_screen = GameLoop(screen, settings, tiles, starting_level).run()
         else:
             next_screen = "quit"
 

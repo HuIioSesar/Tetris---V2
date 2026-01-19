@@ -1,21 +1,59 @@
 import pygame
-import random
 from screens.game_background import GameBackgroundScreen
+from screens.tetrominos import Tetromino
 
 class GameLoop:
-    def __init__(self, screen, settings, tiles):
+    def __init__(self, screen, settings, tiles, starting_level):
         self.screen = screen
         self.settings = settings
         self.tiles = tiles
         self.background = GameBackgroundScreen(screen, settings, tiles)
         self.clock = pygame.time.Clock()
+        self.grid = [[0 for _ in range(self.settings.gamecolumns)] for _ in range(self.settings.rows)]
+        # Score        
+        self.score = 0
+        self.level = starting_level
+        self.lines_cleared = 0
+        # Create two first tetrominos
+        self.current_tetromino = Tetromino(screen, settings, tiles, starting_level)
+        self.next_tetromino = Tetromino(screen, settings, tiles, starting_level)   
+    
+    def draw_locked_grid(self):
+        for r in range(self.settings.rows):
+            for c in range(self.settings.gamecolumns):
+                if self.grid[r][c] != 0:  # If cell is occupied
+                    tile_name = self.grid[r][c]  # This stores the tetromino tile key
+                    x_offset = (c + self.settings.x_offset) * self.settings.tile_size * self.settings.scale
+                    y_offset = r * self.settings.tile_size * self.settings.scale
+                    self.tiles.draw_tile(tile_name, x_offset, y_offset, self.screen)
+
+    def clear_full_rows(self):
+        new_grid = []
+        self.rows_cleared = 0
+
+        for row in self.grid:
+            if all(cell != 0 for cell in row):
+                self.rows_cleared += 1
+            else:
+                new_grid.append(row)
+        for _ in range(self.rows_cleared):
+            new_grid.insert(0, [0 for _ in range(self.settings.gamecolumns)])
+
+        self.grid = new_grid
+
+    def add_score(self):
+        points = {1: 40, 2: 100, 3: 300, 4: 1200}
+        if self.rows_cleared > 0:
+            self.score += points.get(self.rows_cleared, 0) * (self.level + 1)
+            self.lines_cleared += self.rows_cleared
+
+            if self.lines_cleared >= (self.level + 1) * 10:
+                self.level += 1
+        print(self.score, self.level)
+
 
     def run(self):
         running = True
-
-        # Draw background once
-        self.background.draw_screen()
-        pygame.display.flip()
 
         while running:
 
@@ -25,16 +63,42 @@ class GameLoop:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         return "options2"  # Go back to previous menu
+            
+            # Draw background
+            self.background.draw_screen()
+            self.draw_locked_grid()
+
+            # Draw current tetromino
+            self.current_tetromino.draw()
+            self.next_tetromino.draw_next(next_x=15, next_y=13)
+            self.current_tetromino.move_down(self.grid)
+            
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.current_tetromino.move_left(self.grid)
+                    elif event.key == pygame.K_RIGHT:
+                        self.current_tetromino.move_right(self.grid)
+                    elif event.key == pygame.K_DOWN:
+                        self.current_tetromino.soft_drop(self.grid)
+                    elif event.key == pygame.K_UP:
+                        self.current_tetromino.rotate()
+            
+            if self.current_tetromino.landed:
+                result = self.current_tetromino.lock_tetromino(self.grid)
+                if result == "Game Over":
+                    return "game_over"  # Or trigger a game over screen later
+                else:
+                    self.clear_full_rows()
+                    self.add_score()
+                    self.current_tetromino = self.next_tetromino
+                    self.next_tetromino = Tetromino(self.screen, self.settings, self.tiles, self.level)  
+
+            # Update display
+            pygame.display.flip()
+
                     
 
-# # --- CONFIGURACIÓN ---
-# pygame.init()
-# SCALE = 5
-# TILE_SIZE = 8
-# GAME_COLUMNS = 10
-# ROWS = 18
-# WIDTH = GAME_COLUMNS * TILE_SIZE * SCALE
-# HEIGHT = ROWS * TILE_SIZE * SCALE
 
 
 # score = 0
@@ -43,106 +107,6 @@ class GameLoop:
 # frame_count = 0
 # fall_speed = 48
 
-# grid = [[0 for _ in range(GAME_COLUMNS)] for _ in range(ROWS)]
-
-# game_over_flag = False
-
-# pygame.display.set_caption("Visualizador de Tiles")
-
-# # --- PALETA DE COLORES ---
-
-# GB_colours = {
-#     0: (255, 215, 154),
-#     1: (116, 198, 196),
-#     2: (255, 99, 42),
-#     3: (49, 75, 98)
-# }
-
-# # Create tetromino class
-# SHAPES = [
-#     ([[1, 1, 1, 1]], "tetro_I"),           # I
-#     ([[1, 1, 1], [1, 0, 0]], "tetro_J"),   # J
-#     ([[1, 1, 1], [0, 0, 1]], "tetro_L"),   # L
-#     ([[1, 1], [1, 1]], "tetro_O"),         # O
-#     ([[1, 1, 1], [0, 1, 0]], "tetro_T"),   # T
-#     ([[1, 1, 0], [0, 1, 1]], "tetro_S"),   # S
-#     ([[0, 1, 1], [1, 1, 0]], "tetro_Z"),   # Z
-# ]
-
-# tiles_tetros = {
-
-# "tetro_I" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 1, 1, 1, 2, 1, 1, 3],
-#     [3, 1, 2, 1, 1, 1, 2, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 2, 1, 1, 2, 1, 1, 3],
-#     [3, 1, 1, 1, 1, 1, 2, 3],
-#     [3, 1, 2, 1, 2, 1, 1, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "tetro_O" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 0, 0, 0, 0, 0, 0, 3],
-#     [3, 0, 3, 3, 3, 3, 0, 3],
-#     [3, 0, 3, 3, 3, 3, 0, 3],
-#     [3, 0, 3, 3, 3, 3, 0, 3],
-#     [3, 0, 3, 3, 3, 3, 0, 3],
-#     [3, 0, 0, 0, 0, 0, 0, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "tetro_Z" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 1, 1, 3, 3, 1, 1, 3],
-#     [3, 1, 1, 3, 3, 1, 1, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "tetro_S" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 2, 3, 3, 3, 3, 2, 3],
-#     [3, 2, 3, 0, 0, 3, 2, 3],
-#     [3, 2, 3, 0, 0, 3, 2, 3],
-#     [3, 2, 3, 3, 3, 3, 2, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "tetro_T" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 1, 0, 0, 0, 0, 1, 3],
-#     [3, 1, 0, 1, 1, 3, 1, 3],
-#     [3, 1, 0, 1, 1, 3, 1, 3],
-#     [3, 1, 3, 3, 3, 3, 1, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "tetro_J" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 1, 3, 3, 3, 3, 1, 3],
-#     [3, 1, 3, 0, 0, 3, 1, 3],
-#     [3, 1, 3, 0, 0, 3, 1, 3],
-#     [3, 1, 3, 3, 3, 3, 1, 3],
-#     [3, 1, 1, 1, 1, 1, 1, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "tetro_L" : [
-#     [3, 3, 3, 3, 3, 3, 3, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 2, 2, 2, 2, 2, 2, 3],
-#     [3, 3, 3, 3, 3, 3, 3, 3],],
-
-# "0" : [[0]*8 for _ in range(8)],
-# }
 
 # # Check full rows and clear them
 

@@ -73,13 +73,6 @@ class Options1Screen:
             for row in tile_matrix
         ]
     
-    @staticmethod
-    def recolor_tile_fixed(tile_matrix, old_color=1, new_color=3):  # Black for fixed
-        return [
-            [new_color if pixel == old_color else pixel for pixel in row]
-            for row in tile_matrix
-        ]
-
 
     #In the future, all screens could be together? The draw in the same way, just need a diferent matrix to print
     def draw_screen(self):
@@ -104,7 +97,7 @@ class Options1Screen:
 
                 # If game selection is confirmed (phase 2), keep it black
                 if self.selection_phase == 2 and i == self.selected_game_index:
-                    tile_matrix = self.recolor_tile_fixed(tile_matrix)
+                    tile_matrix = self.recolor_tile(tile_matrix)
                 # If game selection is active and blinking
                 elif self.selection_phase == 1 and i == self.selected_game_index and not blink_on:
                     tile_matrix = self.recolor_tile(tile_matrix)
@@ -122,12 +115,8 @@ class Options1Screen:
 
                 tile_matrix = self.tiles.tiles[char]
 
-                # If music selection is confirmed (future phase), keep black
-                # (Not needed now, but ready for next screens)
-                if self.selection_phase > 2 and i == self.selected_music_index:
-                    tile_matrix = self.recolor_tile_fixed(tile_matrix)
                 # If music selection is active and blinking
-                elif self.selection_phase == 2 and i == self.selected_music_index and not blink_on:
+                if self.selection_phase == 2 and i == self.selected_music_index and not blink_on:
                     tile_matrix = self.recolor_tile(tile_matrix)
 
                 self.tiles.draw_tile(tile_matrix, x, y, self.screen)
