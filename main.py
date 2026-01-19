@@ -32,7 +32,7 @@ def main():
             result = Options2Screen(screen, settings, tiles).run()
             if isinstance(result, tuple):
                 next_screen, starting_level = result  # Unpack tuple
-
+#que feo es el putas
             else:
                 next_screen = result
 

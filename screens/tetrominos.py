@@ -19,7 +19,19 @@ class Tetromino:
         self.landed = False  # Checks if piece has landed
         self.current_level = starting_level
         
-    
+    # def draw(self, next = False):
+    #     next_x, next_y =0
+    #     if next:
+    #         next_x = 15, next_y = 13
+    #     for r in range(len(self.shape)):
+    #         for c in range(len(self.shape[r])):
+    #             if self.shape[r][c] == 1:
+    #                 # Calculate pixel position based on tile system
+    #                 x = (self.col + c + self.settings.x_offset) * self.settings.tile_size * self.settings.scale # +2 so it's on the third column of the background
+    #                 y = (self.row + r) * self.settings.tile_size * self.settings.scale
+    #                 # Get the correct tile pattern for this tetromino type
+    #                 self.tiles.draw_tile(self.tile_key, x, y, self.screen)
+
     def draw(self):
         for r in range(len(self.shape)):
             for c in range(len(self.shape[r])):
