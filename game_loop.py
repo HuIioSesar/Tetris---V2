@@ -49,8 +49,29 @@ class GameLoop:
 
             if self.lines_cleared >= (self.level + 1) * 10:
                 self.level += 1
-        print(self.score, self.level)
+        print(self.score, self.level,self.lines_cleared)
+    
+    def number_to_tiles(self, number):
+        # Convert number to string
+        num_str = str(number)
+        return [f"N{digit}" for digit in num_str]
+    
+    def draw_number_tiles(self, tile_keys, right_col, row):
+        for i, tile_key in enumerate(reversed(tile_keys)):
+            col = right_col - i
+            x = col * self.settings.tile_size * self.settings.scale
+            y = row * self.settings.tile_size * self.settings.scale
+            self.tiles.draw_tile(tile_key, x, y, self.screen)
 
+    def draw_stats(self):
+        # position score on grid
+        right_col = 17    
+        score_row = 3
+        level_row = 7
+        lines_row = 10
+        self.draw_number_tiles(self.number_to_tiles(self.score), right_col, score_row)
+        self.draw_number_tiles(self.number_to_tiles(self.level), right_col, level_row)
+        self.draw_number_tiles(self.number_to_tiles(self.lines_cleared), right_col, lines_row)
 
     def run(self):
         running = True
@@ -71,8 +92,9 @@ class GameLoop:
             # Draw current tetromino
             self.current_tetromino.draw()
             self.next_tetromino.draw_next(next_x=15, next_y=13)
+            self.draw_stats()
             self.current_tetromino.move_down(self.grid)
-            
+
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
