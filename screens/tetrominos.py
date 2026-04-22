@@ -18,20 +18,11 @@ class Tetromino:
         self.last_fall_time = pygame.time.get_ticks()  # Track time for falling
         self.landed = False  # Checks if piece has landed
         self.current_level = starting_level
-        
-    # def draw(self, next = False):
-    #     next_x, next_y =0
-    #     if next:
-    #         next_x = 15, next_y = 13
-    #     for r in range(len(self.shape)):
-    #         for c in range(len(self.shape[r])):
-    #             if self.shape[r][c] == 1:
-    #                 # Calculate pixel position based on tile system
-    #                 x = (self.col + c + self.settings.x_offset) * self.settings.tile_size * self.settings.scale # +2 so it's on the third column of the background
-    #                 y = (self.row + r) * self.settings.tile_size * self.settings.scale
-    #                 # Get the correct tile pattern for this tetromino type
-    #                 self.tiles.draw_tile(self.tile_key, x, y, self.screen)
+        self.soft_drop_distance = 0
+        self.hard_drop_distance = 0
 
+        self.rotation_state = 0
+        
     def draw(self):
         for r in range(len(self.shape)):
             for c in range(len(self.shape[r])):
@@ -41,7 +32,6 @@ class Tetromino:
                     y = (self.row + r) * self.settings.tile_size * self.settings.scale
                     # Get the correct tile pattern for this tetromino type
                     self.tiles.draw_tile(self.tile_key, x, y, self.screen)
-
     
     def draw_next(self, next_x, next_y):
         for r in range(len(self.shape)):
@@ -52,26 +42,21 @@ class Tetromino:
                     self.tiles.draw_tile(self.tile_key, x, y, self.screen)
 
 
-    #def movement
     def move_down(self, grid):        
         current_time = pygame.time.get_ticks() 
 
         fall_speed = max(self.settings.max_speed, self.settings.min_speed - self.current_level * self.settings.speed_increase)
-        # Convert frames to milliseconds
         fall_speed_ms = fall_speed * (1000 // 60) 
 
         if current_time - self.last_fall_time > fall_speed_ms:
-            
-            # Use the check_collision function instead of repeating the logic
             if not self.check_collision(grid, self.row + 1, self.col):
                 self.row += 1
             else:
                 self.landed = True
-                self.lock_tetromino(grid)
-
+                result = self.lock_tetromino(grid)
+                return result
             self.last_fall_time = current_time
 
-    #def movement
     def move_left(self, grid):
         if not self.check_collision(grid, self.row, self.col - 1):
             self.col -= 1
@@ -81,29 +66,73 @@ class Tetromino:
     def soft_drop(self, grid):
         if not self.check_collision(grid, self.row + 1, self.col):
             self.row += 1
+            self.soft_drop_distance += 1
         else:
             self.landed = True
             self.lock_tetromino(grid)
+    def hard_drop(self, grid):
+        while not self.check_collision(grid, self.row + 1, self.col):
+            self.row += 1
+            self.hard_drop_distance += 1
+        self.landed = True
+        self.lock_tetromino(grid)
 
-    #def rotation
-    def rotate(self):
-        rotated_shape = [list(row) for row in zip(*self.shape[::-1])]  # Rotate the shape
-        self.shape = rotated_shape  # Update the shape
- 
-    def check_collision(self, grid, target_row, target_col):
-        for r in range(len(self.shape)):
-            for c in range(len(self.shape[r])):
-                if self.shape[r][c] == 1:
+    def rotate(self, grid, direction=1):
+        if direction != 1:
+            direction = 1
+
+        old_shape = self.shape
+        old_state = self.rotation_state
+        new_state = (self.rotation_state + 1) % 4
+
+        rotated_shape = [list(row) for row in zip(*self.shape[::-1])]
+
+        if self.tile_key == "tetro_I":
+            kick_table = self.settings.srs_kicks_i
+        elif self.tile_key == "tetro_O":
+            kick_table = self.settings.srs_kicks_o
+        else:
+            kick_table = self.settings.srs_kicks_jlstz
+
+        kicks = kick_table.get((old_state, new_state), [(0, 0)])
+
+        for dx, dy in kicks:
+            test_col = self.col + dx
+            test_row = self.row + dy
+
+            if not self.check_collision(grid, test_row, test_col, shape=rotated_shape):
+                self.shape = rotated_shape
+                self.col = test_col
+                self.row = test_row
+                self.rotation_state = new_state
+                return
+
+        self.shape = old_shape
+        self.rotation_state = old_state
+  
+    def check_collision(self, grid, target_row, target_col, shape=None):
+        if shape is None:
+            shape = self.shape
+
+        for r in range(len(shape)):
+            for c in range(len(shape[r])):
+                if shape[r][c] == 1:
                     new_r = target_row + r
                     new_c = target_col + c
-                    # Check bottom and sides
-                    if new_r >= self.settings.rows or new_c < 0 or new_c >= self.settings.gamecolumns:
+
+                    # 1) Check vertical bounds (top and bottom)
+                    if new_r < 0 or new_r >= self.settings.rows:
                         return True
-                    # Check if cell is occupied
+
+                    # 2) Check horizontal bounds (left and right walls)
+                    if new_c < 0 or new_c >= self.settings.gamecolumns:
+                        return True
+
+                    # 3) Check collision with locked blocks
                     if grid[new_r][new_c] != 0:
                         return True
-        return False
 
+        return False
 
     #lock tetromino if bottom or touching a previous piece  
     def lock_tetromino(self, grid):
